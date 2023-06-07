@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { Container, Button, Row, Col, Form } from "react-bootstrap";
 import { ToastContainer, toast } from "react-toastify";
 
-const socket = io("http://localhost:8000");
+const socket = io("http://43.205.110.43:8000");
 
 const App = () => {
   const [joinWithNumber, setJoinWithNumber] = useState(0);
