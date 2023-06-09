@@ -1,14 +1,17 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useLayoutEffect } from "react";
 import io from "socket.io-client";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "react-toastify/dist/ReactToastify.css";
 import { Container, Button, Row, Col, Form } from "react-bootstrap";
 import { ToastContainer, toast } from "react-toastify";
+import Confetti from 'react-confetti';
 
-const socket = io("http://13.127.12.214:8000");
+
+const socket = io("http://127.0.0.1:8000");
 
 const App = () => {
+  
   const [joinWithNumber, setJoinWithNumber] = useState(0);
   const [number, setNumber] = useState("");
   const [flag, setFlag] = useState(false);
@@ -20,6 +23,8 @@ const App = () => {
   const [mymessage, setMymessage] = useState([]);
   const [friendmessage, setFriendmessage] = useState([]);
   const [messaget, setMessaget] = useState("");
+  const [win,setWin]=useState(false);
+  const bl="----------------------------";
   const [gameBoard, setGameBoard] = useState([
     ["", "", ""],
     ["", "", ""],
@@ -31,36 +36,30 @@ const App = () => {
     vRef.current = value;
   };
 
-  useEffect(() => {
-    if (game) {
-      const handleBeforeUnload = (event) => {
-        event.preventDefault();
-        event.returnValue = "Are you Confirm?"; // Display a confirmation dialog
-      };
-
-      const handleUnload = (e) => {
-        if (window.confirm("Are you sure you want to leave this page?")) {
-          console.log("dddsf");
-        } else {
-          // Stay on the current page
-          e.preventDefault();
-        }
-      };
-
-      window.addEventListener("beforeunload", handleBeforeUnload);
-      window.addEventListener("unload", handleUnload);
-
-      return () => {
-        window.removeEventListener("beforeunload", handleBeforeUnload);
-        window.removeEventListener("unload", handleUnload);
-      };
-    }
-  }, [game]);
+  
 
   useEffect(() => {
     socket.on("leaveGame", () => {
+      if(game){
       setMessage("You have won the Game");
       toast.success("Player Has left");
+      setWin(true);
+      setTimeout(()=>
+      {
+        
+        window.location.reload();
+      },4000)
+    }
+    else
+    {
+      toast.info("Player Has left");
+      
+      setTimeout(()=>
+      {
+        
+        window.location.reload();
+      },4000)
+    }
     });
 
     socket.on("waiting", () => {
@@ -74,6 +73,7 @@ const App = () => {
     socket.on("updateMessage", (m) => {
       setFriendmessage((prevMessage) => [...prevMessage, m]);
     });
+    
 
     socket.on("startGame", async (temp, con, p) => {
       await setTemp(temp);
@@ -94,15 +94,13 @@ const App = () => {
       clickRef.current = true;
     });
 
-    console.log(vRef.current);
 
     socket.on("gameWinner", (t) => {
       clickRef.current = false;
       setGame(false);
-      console.log();
-
+      
       if (t === vRef.current) {
-        console.log("Won");
+        setWin(true);
         setMessage("You have Won");
       } else if (t === "draw") {
         setMessage("Match has been Drawn");
@@ -110,6 +108,8 @@ const App = () => {
         setMessage("You have Lost");
       }
     });
+
+    
   }, []);
 
   const handleJoinWithNumber = () => {
@@ -155,18 +155,24 @@ const App = () => {
       // Emit an event to update the game board on the server and notify the other player
       socket.emit("updateGameBoard", newGameBoard, temp, player);
     }
-  };
 
-  const handlemessage = (e) => {
+  };
+  
+  const handlemessage = async(e) => {
     e.preventDefault();
     socket.emit("Message", temp, player, messaget);
-    setMymessage((prevMessage) => [...prevMessage, messaget]);
-    setMessaget("");
+    await setMymessage((prevMessage) => [...prevMessage, messaget]);
+    await setMessaget("");
   };
 
   return (
     <Container>
       <ToastContainer />
+      {win?(<Confetti
+      width={window.innerWidth-20}
+      height={window.innerHeight-20}
+    />):null}
+      
       <h1 className="d-flex justify-content-center tittle">Tic Tac Toe</h1>
       {!flag ? (
         <>
@@ -194,7 +200,7 @@ const App = () => {
                 variant="primary"
                 style={{marginTop:"1em"}}
                 onClick={handleJoin}
-                disabled={!number || number.length < 4}
+                disabled={!number || number.length !==6}
               >
                 Join
               </Button>
