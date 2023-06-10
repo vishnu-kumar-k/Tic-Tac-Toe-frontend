@@ -8,7 +8,7 @@ import { ToastContainer, toast } from "react-toastify";
 import Confetti from 'react-confetti';
 
 
-const socket = io("http://127.0.0.1:8000");
+const socket = io("http://52.66.14.139:8000");
 
 const App = () => {
   
